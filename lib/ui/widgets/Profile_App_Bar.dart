@@ -1,20 +1,24 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:task_manager_project/ui/controllers/auth_controller.dart';
 import 'package:task_manager_project/ui/screens/Authentication/sign_in_screen.dart';
 import 'package:task_manager_project/ui/screens/Navigation_Screen/Update_Profile_Screen.dart';
 
 import '../utility/app_colors.dart';
-import 'Network_Cached_Image.dart';
+
 
 AppBar profileAppBar(context, [bool fromUpdateProfile = false]) {
   return AppBar(
     backgroundColor: AppColors.themeColor,
-    leading: const Padding(
+    leading: Padding(
       padding: EdgeInsets.all(5.0),
       child: CircleAvatar(
-        child: NetworkCachedImage(
-          url: '',
-        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(50),
+          child: Image.memory(base64Decode(AuthController.userData?.photo??''),
+          ),
+        )
       ),
     ),
     title: GestureDetector(

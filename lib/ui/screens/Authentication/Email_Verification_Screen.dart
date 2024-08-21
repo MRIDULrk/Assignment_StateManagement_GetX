@@ -1,7 +1,11 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:task_manager_project/data/models/network_Response.dart';
+import 'package:task_manager_project/data/networkUtilities/urls.dart';
+import 'package:task_manager_project/data/network_caller/network_caller.dart';
 import 'package:task_manager_project/ui/utility/app_colors.dart';
 import 'package:task_manager_project/ui/widgets/background_widget.dart';
+import 'package:task_manager_project/ui/widgets/snackbarMessage.dart';
 
 import 'Pin_Verification_Screen.dart';
 
@@ -48,7 +52,9 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                   ElevatedButton(
                     onPressed: () {
 
-                      OnTapConfirmationButton();
+                      verifyEmail(_emailTEcontroller.text);
+
+
 
                     },
                     child: Icon(Icons.arrow_circle_right_rounded),
@@ -92,13 +98,41 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
     Navigator.pop(context);
   }
 
-  void OnTapConfirmationButton() {
-    Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => PinVerificationScreen(),
-        ));
+  Future<void> verifyEmail(String verifyEmail) async {
+
+
+    if (mounted) {
+      setState(() {});
+    }
+
+    final  NetworkResponse response =
+    await NetWorkCaller.getRequest(Urls.recoverVerifyEmail(verifyEmail));
+
+    if (mounted) {
+      setState(() {});
+    }
+
+    if (response.isSuccess ) {
+
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => PinVerificationScreen(email: verifyEmail),
+          ));
+
+
+    } else {
+
+      if(mounted){
+        showSnackBarMessage(
+            context,response.erroMessage ?? 'Get New Task Failed,Try Again!!');
+      }
+
+    }
+
+
   }
+
 
   @override
   void dispose() {

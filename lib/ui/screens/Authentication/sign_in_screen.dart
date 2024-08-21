@@ -1,10 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:task_manager_project/data/models/login_model.dart';
-import 'package:task_manager_project/data/models/network_Response.dart';
-import 'package:task_manager_project/data/networkUtilities/urls.dart';
-import 'package:task_manager_project/data/network_caller/network_caller.dart';
-import 'package:task_manager_project/ui/controllers/auth_controller.dart';
+import 'package:get/get.dart';
+import 'package:task_manager_project/ui/controllers/sign_in_controller.dart';
 import 'package:task_manager_project/ui/screens/Authentication/sign_up_screen.dart';
 import 'package:task_manager_project/ui/screens/Navigation_Screen/Main_Bottom_Nav_Screen.dart';
 import 'package:task_manager_project/ui/utility/app_colors.dart';
@@ -25,8 +22,6 @@ class _SignInScreenState extends State<SignInScreen> {
   final TextEditingController _emailTEcontroller = TextEditingController();
   final TextEditingController _passwordTEcontroller = TextEditingController();
 
-
-  bool _inProgressSignIn = false;
 
 
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
@@ -50,34 +45,29 @@ class _SignInScreenState extends State<SignInScreen> {
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
                     const SizedBox(height: 16),
-
                     TextFormField(
                       controller: _emailTEcontroller,
                       keyboardType: TextInputType.emailAddress,
                       decoration: const InputDecoration(
                         hintText: 'Email',
                       ),
-
                       validator: (String? value) {
                         if (value?.trim().isEmpty ?? true) {
                           return 'Enter Your Email.';
                         }
 
-                        if (AppConstants.emailRegExp.hasMatch(value!) == false) {
+                        if (AppConstants.emailRegExp.hasMatch(value!) ==
+                            false) {
                           return 'Enter a valid email address';
                         }
 
                         return null;
                       },
                     ),
-
                     const SizedBox(height: 8),
-
                     TextFormField(
                       controller: _passwordTEcontroller,
-                      decoration: const InputDecoration(
-                        hintText: 'PassWord'),
-
+                      decoration: const InputDecoration(hintText: 'PassWord'),
                       validator: (String? value) {
                         if (value?.trim().isEmpty ?? true) {
                           return 'Enter Your Password.';
@@ -86,21 +76,23 @@ class _SignInScreenState extends State<SignInScreen> {
                       },
                     ),
                     const SizedBox(height: 16),
-
-                    Visibility(
-                      visible: _inProgressSignIn==false,
-                      replacement: const Center(
-                        child: CircularProgressIndicator(),
-                      ),
-                      child: ElevatedButton(
-                        onPressed: () {
-                          onTapNextButton();
-                        },
-                        child: const Icon(Icons.arrow_circle_right_rounded),
-                      ),
+                    GetBuilder<SignInController>(
+                      builder: (signInController) {
+                        return Visibility(
+                          visible: signInController.inProgressSignIn == false,
+                          replacement: const Center(
+                            child: CircularProgressIndicator(),
+                          ),
+                          child: ElevatedButton(
+                            onPressed: () {
+                              onTapNextButton();
+                            },
+                            child: const Icon(Icons.arrow_circle_right_rounded),
+                          ),
+                        );
+                      }
                     ),
                     const SizedBox(height: 32),
-
                     Center(
                       child: Column(
                         children: [
@@ -145,69 +137,27 @@ class _SignInScreenState extends State<SignInScreen> {
     );
   }
 
-  void onTapNextButton() {
-
-
+  Future<void> onTapNextButton() async{
     if (_formKey.currentState!.validate()) {
 
-      _signIn();
+      final SignInController signInController = Get.find<SignInController>();
 
-    }
+      final bool result = await signInController.signIn(
+        _emailTEcontroller.text.trim(),
+        _passwordTEcontroller.text,
+      );
 
-  }
+      if(result){
+        Get.offAll(()=>const MainBottomNavScreen());
+      }else{
 
-  Future<void> _signIn() async {
-
-    _inProgressSignIn = true;
-
-    if (mounted) {
-      setState(() {});
-    }
-
-    Map<String, dynamic> requestInput = {
-
-      "email": _emailTEcontroller.text.trim(),
-      "password": _passwordTEcontroller.text,
-
-    };
-
-   final  NetworkResponse response =
-    await NetWorkCaller.postRequest(Urls.login,body:requestInput);
-
-    _inProgressSignIn = false;
-
-    if (mounted) {
-      setState(() {});
-    }
-
-    if (response.isSuccess) {
-
-      LoginModel loginModel = LoginModel.fromJson(response.responseData);
-      await AuthController.saveUserAccessToken(loginModel.token!);
-      await AuthController.saveUserData(loginModel.userModel!);
-
-      if (mounted) {
-
-        Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const MainBottomNavScreen(),
-            ));
-
-      }
-    } else {
-
-      if(mounted){
-        showSnackBarMessage(
-            context, response.erroMessage ?? 'Invalid Credentials!!');
+        if(mounted){
+          showSnackBarMessage(context, signInController.errorMassage);
+        }
       }
 
     }
   }
-
-
-
-
 
   void onTapSignUpButton() {
     Navigator.push(

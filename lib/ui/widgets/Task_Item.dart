@@ -24,7 +24,7 @@ class _TaskItemState extends State<TaskItem> {
   bool _DeleteInProgress = false;
   bool _editInProgress = false;
   String dropDownValue = '';
-  List<String> statusList = ['New', 'Completed'];
+  List<String> statusList = ['New', 'Completed','Progress','Cancelled'];
 
   @override
   Widget build(BuildContext context) {

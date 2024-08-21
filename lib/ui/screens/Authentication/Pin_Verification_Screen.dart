@@ -1,23 +1,32 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
+import 'package:task_manager_project/data/models/network_Response.dart';
+import 'package:task_manager_project/data/networkUtilities/urls.dart';
+import 'package:task_manager_project/data/network_caller/network_caller.dart';
 
 import 'package:task_manager_project/ui/utility/app_colors.dart';
 import 'package:task_manager_project/ui/widgets/background_widget.dart';
+import 'package:task_manager_project/ui/widgets/center_progress_indicator.dart';
+import 'package:task_manager_project/ui/widgets/snackbarMessage.dart';
 
 import 'Reset_Password_Screen.dart';
 import 'sign_in_screen.dart';
 
 class PinVerificationScreen extends StatefulWidget {
-  const PinVerificationScreen({super.key});
+  const PinVerificationScreen({super.key, required this.email});
+
+  final String email;
 
   @override
   State<PinVerificationScreen> createState() => _PinVerificationScreenState();
 }
 
 class _PinVerificationScreenState extends State<PinVerificationScreen> {
-  final TextEditingController _emailTEcontroller = TextEditingController();
+
   final TextEditingController _pinTEcontroller = TextEditingController();
+
+  bool otpVerificationInProgress = false;
 
   @override
   Widget build(BuildContext context) {
@@ -42,11 +51,15 @@ class _PinVerificationScreenState extends State<PinVerificationScreen> {
                   const SizedBox(height: 16),
                   buildPinCodeTextField(),
                   const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () {
-                      OnTapVerifyInButton();
-                    },
-                    child: Text('Verify'),
+                  Visibility(
+                    visible: otpVerificationInProgress==false,
+                    replacement: const CenterProgressIndicator(),
+                    child: ElevatedButton(
+                      onPressed: () {
+                        OnTapVerifyInButton();
+                      },
+                      child: Text('Verify'),
+                    ),
                   ),
                   const SizedBox(height: 32),
                   Center(
@@ -115,17 +128,49 @@ class _PinVerificationScreenState extends State<PinVerificationScreen> {
   }
 
   void OnTapVerifyInButton() {
-    Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const ResetPasswordScreen(),
-        ));
+
+    verifyOTP(_pinTEcontroller.text.trim());
+
+
   }
 
-  @override
-  void dispose() {
-    _emailTEcontroller.dispose();
+  Future<void> verifyOTP(String otp) async {
 
-    super.dispose();
+    otpVerificationInProgress = true;
+
+
+    if (mounted) {
+      setState(() {});
+    }
+
+    final  NetworkResponse response =
+    await NetWorkCaller.getRequest(Urls.recoverVerifyOTP(widget.email, otp));
+
+    otpVerificationInProgress = false;
+
+    if (mounted) {
+      setState(() {});
+    }
+
+    if (response.isSuccess && response.responseData['status']=='success') {
+
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) =>  ResetPasswordScreen(email: 'email',otp: otp),
+          ));
+
+
+    } else {
+
+      if(mounted){
+        showSnackBarMessage(
+            context,response.erroMessage ?? 'Pin Verification Failed,Try Again!!');
+      }
+
+    }
+
+
   }
+
 }
